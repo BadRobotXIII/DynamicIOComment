@@ -1,0 +1,187 @@
+--*************************************************************************************************
+--** Company: KayZee Automation
+--** Author: Kameron Zulfic
+--** Developer Contact: kzulfic@outlook.com
+--** Date:  07/19/2023.
+--** Function: Dynamic IO commenting to change DI/DO or RI/RO comments based on a register value
+--** Intended Use: Tool changer applications where IO points are diffrent from one tool to the next
+--** Revision 1.0 - Initial Release
+--** Revision 1.1 - Reduced form columns. Form would fault controller when switching to split screen.
+--** Revision 1.2 - Added variable index to reduce the value array update logic and improve expandability
+--*************************************************************************************************
+
+PROGRAM DYNAMIC_IO_CMNT
+
+%COMMENT = 'Dynamic IO Comment'
+%NOLOCKGROUP
+%NOBUSYLAMP
+%CMOSVARS
+%NOABORT = ERROR + COMMAND
+%NOPAUSE = ERROR + COMMAND + TPENABLE
+%NOPAUSESHFT
+%INCLUDE KLEVKEYS
+%INCLUDE KLEVKMSK
+
+TYPE 
+	cmnt_list = STRUCTURE
+		identifier:	INTEGER
+        point_start_in: INTEGER
+        point_end_in: INTEGER
+        point_start_out: INTEGER
+        point_end_out: INTEGER
+		cmnt_in:		ARRAY[20] OF STRING[24]
+		cmnt_out:	ARRAY[20] OF STRING[24]
+	ENDSTRUCTURE
+
+--Constants
+CONST
+    rdig_port_max = 8                    --RDI/RDO port maximum
+
+--Variables
+VAR
+
+        idx				        :INTEGER --Index integer
+        ENTRY                   :INTEGER -- Entry status
+        STATUS		            :INTEGER --Built in function status integer
+        dig_port_max            :INTEGER --Maximum configure digital port
+        port_type	IN CMOS		:INTEGER --Specifies type of port, DI/DO, RDI/RDO
+        port_num	IN CMOS		:INTEGER --Specifies port type index, DI[1], RI[1]
+        port_cmnt	IN CMOS		:STRING[24]  --Port comment string
+        point_i		IN CMOS		:INTEGER --Point index subscript specifier
+        port_type_in        	:INTEGER --Input port type
+        port_type_out       	:INTEGER --Output port type
+        cmnt_prefix_in	IN CMOS	:STRING[8]  --Input comment prefix
+        cmnt_prefix_out	IN CMOS	:STRING[8]  --Output comment prefix
+        real_flag		IN CMOS	:BOOLEAN --Register real flag
+        cmnt_list_idx           :INTEGER -- Comment list index that contains the IO list
+        cmnt_list_id_int	IN CMOS	:INTEGER --Comment list identifier integer value
+        cmnt_list_id_real	IN CMOS	:REAL --Comment list identifier integer value
+        cmnt_list_id_reg	IN CMOS	:INTEGER --list identifier container
+        cmnt_lists		IN CMOS	:ARRAY[30] OF cmnt_list --Comment list structure
+        
+----------------------------------------------------------- 
+--Start program
+-----------------------------------------------------------
+BEGIN
+
+----------------------------------------------------------- 
+--Available port types and associated port codes
+----------------------------------------------------------- 
+--Port types
+--io_din    =1  Digital input   
+--io_dout   =2  Digital output   
+--io_rdi    =8  Robot digital input   
+--io_rdo    =9  Robot digital output   
+----------------------------------------------------------- 
+--Get identifier register value
+--Loop through all indices to find active index
+-----------------------------------------------------------
+IF NOT(UNINIT(cmnt_list_id_reg)) THEN
+    GET_REG(cmnt_list_id_reg, real_flag, cmnt_list_id_int, cmnt_list_id_real, STATUS)
+ENDIF
+
+FOR idx = 1 TO 25 DO       
+    IF NOT(UNINIT(cmnt_lists[idx].identifier)) THEN
+        IF (cmnt_lists[idx].identifier = cmnt_list_id_int) THEN
+        cmnt_list_idx = idx
+        ENDIF
+        IF UNINIT(cmnt_list_idx) THEN
+            WRITE TPERROR('Unitialized list identifier')
+            GOTO endprog
+        ENDIF
+    ENDIF
+ENDFOR
+
+----------------------------------------------------------- 
+--Set port code for desired port type DIN/DIO or RDI/RDO
+----------------------------------------------------------- 
+IF (NOT(UNINIT(port_type))) THEN 
+    IF (port_type >= 1) AND (port_type <= 2) THEN
+        SELECT port_type OF
+            CASE(1):
+            port_type_in = 1
+            port_type_out = 2
+        CASE(2):
+            port_type_in = 8
+            port_type_out = 9
+        ENDSELECT
+    ENDIF
+ELSE
+    WRITE TPERROR('Invalid or uninitialized port type', CR)
+    GOTO endprog
+ENDIF
+
+
+----------------------------------------------------------- 
+--Get maximum digital port value
+-----------------------------------------------------------
+GET_VAR(ENTRY, '*SYSTEM*', '$MAX_DIG_PRT', dig_port_Max, STATUS)
+IF(STATUS <> 0) THEN
+    GOTO endprog
+ENDIF
+
+----------------------------------------------------------- 
+--Validate port range
+--DI/DO maximum range restricted by system variable $MAX_DIG_PORT
+--RDI/RDO maximum range contstant 8 in/out
+--Abort execution if range exceeds range
+-----------------------------------------------------------
+IF (NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_start_in)) AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_end_in)) AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_start_out)) AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_end_out))) THEN
+    SELECT port_type OF
+        CASE(1): --DI/DO
+            IF (cmnt_lists[cmnt_list_idx].point_start_in > dig_port_max) OR (cmnt_lists[cmnt_list_idx].point_start_out > dig_port_max ) THEN
+                GOTO endprog
+            ENDIF
+        CASE(2): --RDI/RDO  
+            IF (cmnt_lists[cmnt_list_idx].point_start_in > rdig_port_max) OR (cmnt_lists[cmnt_list_idx].point_start_out > rdig_port_max ) THEN
+                GOTO endprog 
+            ENDIF 
+    ENDSELECT
+ELSE
+    WRITE TPERROR('Unitialized identifier or point start/end')
+ENDIF
+
+
+----------------------------------------------------------- 
+--Set port input comment
+----------------------------------------------------------- 
+idx = 1
+point_i = cmnt_lists[cmnt_list_idx].point_start_in
+next_in::
+IF (point_i <= cmnt_lists[cmnt_list_idx].point_end_in) THEN
+	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_in[idx])) THEN		--Check for uninitialized STRING. Skip string if no data is present.
+		SET_PORT_CMT(port_type_in, point_i, cmnt_prefix_in + cmnt_lists[cmnt_list_idx].cmnt_in[idx], STATUS) 	--Write string to port comment
+	ELSE
+		SET_PORT_CMT(port_type_in, point_i, cmnt_prefix_in + 'spare', STATUS)
+		WRITE TPERROR('Uninitialized Input comment', cmnt_list_id_int,  idx, CR)
+        WRITE TPERROR('Comment set to default', cmnt_list_id_int,  idx, CR)
+	ENDIF
+		point_i = point_i + 1
+		idx = idx + 1
+	GOTO next_in
+ENDIF
+
+----------------------------------------------------------- 
+--Set port output comment
+----------------------------------------------------------- 
+idx = 1
+point_i = cmnt_lists[cmnt_list_idx].point_start_out
+next_out::
+IF (point_i <= cmnt_lists[cmnt_list_idx].point_end_out) THEN
+	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_out[idx])) THEN	--Check for uninitialized string. Write prefix string to comment.
+		SET_PORT_CMT(port_type_out, point_i, cmnt_prefix_out + cmnt_lists[cmnt_list_idx].cmnt_out[idx], STATUS)	--Write string to port comment
+	ELSE
+		SET_PORT_CMT(port_type_out, point_i, cmnt_prefix_out + 'spare', STATUS)
+		WRITE TPERROR('Uninitialized Input comment', cmnt_list_id_int,  idx, CR)
+        WRITE TPERROR('Comment set to default', cmnt_list_id_int,  idx, CR)
+	ENDIF  
+		 point_i = point_i + 1
+		 idx = idx + 1
+    GOTO next_out
+ENDIF
+
+----------------------------------------------------------- 
+--End program
+----------------------------------------------------------- 
+endprog::
+END DYNAMIC_IO_CMNT

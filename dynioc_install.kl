@@ -1,0 +1,110 @@
+--*************************************************************************************************
+--** Company: KayZee Automation
+--** Author: Kameron Zulfic
+--** Developer Contact: kzulfic@outlook.com
+--** Date:  07/19/2023.
+--** Function: This program will load all files necessary for dynamic IO commenting.
+--** Revision 1.0 - Initial Release
+--** Revision 1.1 - Reduced form columns. Form would fault controller when switching to split screen.
+--** Revision 1.2 - Added variable index to reduce the value array update logic and improve expandability			
+--*************************************************************************************************
+PROGRAM dynioc_install
+%COMMENT = 'Dynamic IO Install'
+%NOLOCKGROUP 
+%ALPHABETIZE 
+%CMOSVARS  
+%NOABORT = ERROR + COMMAND
+%NOBUSYLAMP 
+%NOPAUSE = ERROR + COMMAND + TPENABLE
+
+VAR
+	progStop			:BOOLEAN
+	temp				:INTEGER
+	i					:INTEGER
+	entry				:INTEGER
+	status				:INTEGER
+	optionSW			:INTEGER
+	overwriteSW		:BOOLEAN
+	nowaitSW			:BOOLEAN
+	loadDirectory		:STRING[72]
+	loadDevice 			:STRING[8]
+	loadPath 			:STRING[32]
+	loadFileName		:STRING[32]
+	tempStr				:STRING[3]
+	parameter			:STRING[128]
+
+BEGIN
+	progStop = FALSE
+
+--Get active directory for file load
+	GET_VAR(entry, '*SYSTEM*', '$DEVICE', loadDevice, status)
+	GET_VAR(entry, '*SYSTEM*', '$DEV_PATH', loadPath, status)
+	loadDirectory = loadDevice + loadPath
+	
+--**LOAD ALL FILES IN DIRECTORY**
+--------------------------------------------------------------
+
+--Load "dynioc_config.pc"
+	loadFileName = loadDirectory + 'dynioc_config.pc'
+	 optionSW = 0
+	LOAD (loadFileName, optionSW, status) 
+	IF (status <> 0) THEN
+		parameter = 'Failed to load dynioc_config.pc'
+		FORCE_SPMENU(TP_PANEL,SPI_TPUSER,1)
+		WRITE(parameter, CR)
+		POST_ERR(status, parameter, 0, 1)
+	ELSE
+		SET_VAR(entry, '*SYSTEM*', '$CUSTOMMENU[20].$TITLE', 'Dynamic IO', status)
+		SET_VAR(entry, '*SYSTEM*', '$CUSTOMMENU[20].$PROG_NAME', 'dynioc_config', status)
+	ENDIF
+
+--Load "dynamic_io_cmnt.pc"
+	loadFileName = loadDirectory + 'dynamic_io_cmnt.pc'
+	 optionSW = 0
+	LOAD (loadFileName, optionSW, status) 
+	IF (status <> 0) THEN
+		parameter = 'Failed to load dynamic_io_cmnt.pc'
+		FORCE_SPMENU(TP_PANEL,SPI_TPUSER,1)
+		WRITE(parameter, CR)
+		POST_ERR(status, parameter, 0, 1)
+	ENDIF
+--Load "dynamic_io_cmnt.pc"
+-- 	loadFileName = loadDirectory + 'dynamic_io_cmnt.vr'
+-- 	 optionSW = 0
+-- 	LOAD (loadFileName, optionSW, status) 
+-- 	IF (status <> 0) THEN
+-- 		parameter = 'Failed to load dynamic_io_cmnt.vr'
+-- 		FORCE_SPMENU(TP_PANEL,SPI_TPUSER,1)
+-- 		WRITE(parameter, CR)
+-- 		POST_ERR(status, parameter, 0, 1)
+-- 	ENDIF
+
+--Load "dyn.tx"
+	loadFileName = loadDirectory + 'dyn.tx'
+	ADD_DICT(loadFileName,'dyn', DP_DEFAULT , DP_DRAM , status) 
+	IF (status <> 0) THEN
+		parameter = 'Failed to load dyn.tx'
+		FORCE_SPMENU(TP_PANEL,SPI_TPUSER,1)
+		WRITE(parameter, CR)
+		POST_ERR(status, parameter, 0, 1)
+	ENDIF
+
+--Load "dyn.vr"
+	loadFileName = loadDirectory + 'dyn.vr'
+	 optionSW = 0
+	LOAD (loadFileName, optionSW, status) 
+	IF (status <> 0) THEN
+		parameter = 'Failed to load dyn.vr'
+		FORCE_SPMENU(TP_PANEL,SPI_TPUSER,1)
+		WRITE(parameter, CR)
+		POST_ERR(status, parameter, 0, 1)
+	ENDIF	
+	
+	IF (progStop = TRUE) THEN
+		GOTO endProg
+	ENDIF
+
+	endProg::
+	
+	
+END dynioc_install

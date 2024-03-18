@@ -1,0 +1,174 @@
+--*************************************************************************************************
+--** Company: KayZee Automation
+--** Author: Kameron Zulfic
+--** Developer Contact: kzulfic@outlook.com
+--** Date:  07/19/2023
+--** Function: Run form and setup dynamic IO commenting lists
+--** Revision 1.0 - Initial Release
+--** Revision 1.1 - Reduced form columns. Form would fault controller when switching to split screen.
+--** Revision 1.2 - Added variable index to reduce the value array update logic and improve expandability
+--*************************************************************************************************
+PROGRAM dynioc_config
+%COMMENT = 'Dynamic IO Comment Configuration'
+%STACKSIZE = 500
+%NOLOCKGROUP 
+%ALPHABETIZE 
+%CMOSVARS  
+%NOABORT = ERROR + COMMAND
+%NOBUSYLAMP 
+%NOPAUSE = ERROR + COMMAND + TPENABLE
+%INCLUDE dyn										-- allows you to access form element numbers
+%INCLUDE klevccdf
+%INCLUDE KLEVKEYS
+%INCLUDE KLEVKMSK
+
+VAR
+--General program vars
+	idx				:INTEGER
+	progStop		:BOOLEAN							--Abort
+	entry			:INTEGER							
+	status			:INTEGER
+	optionSW		:INTEGER
+	overwriteSW	:BOOLEAN
+	nowaitSW		:BOOLEAN
+	check			:BOOLEAN
+	tempStr			:STRING[1]
+	parameter		:STRING[128]
+	list_num		:INTEGER							--List number to be displayed
+	list_num_curr	:INTEGER
+	list_num_str	:STRING[128]							--Current list number
+		
+--Form vars
+	device_stat		:INTEGER							--tp_panel or crt_panel
+	value_array		:ARRAY[50] OF STRING[50]			--Form data var names
+	inact_array		:ARRAY[1] OF BOOLEAN				--Default setting
+	change_array	:ARRAY[50] OF BOOLEAN				--True = data changed, [1] is default
+	def_item		:INTEGER							--Current cursor line position
+	term_mask		:INTEGER							--Termination mask (2 = kc_func_key, 8 = kc_enter_key, = kc_prev_key)
+	term_char		:INTEGER							--Termanation type used when form ended
+	null_array		:ARRAY[50] OF BOOLEAN
+	
+
+BEGIN
+	progStop = FALSE
+	device_stat =  TP_PANEL       			--specify the teachpendant for displaying  the form
+	FORCE_SPMENU(device_stat, SPI_TPUSER2,1)
+	def_item = 1 -- start with menu item 1
+
+--Setup form data	(Same order as form program.)
+-----------------------------------------------------------	
+	--Verfiy list number is not uninitialized
+	--If unititialized set to 1
+	IF (UNINIT(list_num)) THEN
+		list_num = 1
+		list_num_curr = 0
+	ENDIF
+
+	--Initialize null array
+	FOR idx = 1 TO 50 DO
+		null_array[idx] = FALSE
+	ENDFOR
+
+	--Common setup parameters
+	value_array [1] = 'list_num'
+	value_array [2] = '[dynamic_io_cmnt]cmnt_list_id_reg'
+	value_array [3] = '[dynamic_io_cmnt]port_type'
+	value_array [4] = '[dynamic_io_cmnt]cmnt_prefix_in'	
+	value_array [5] = '[dynamic_io_cmnt]cmnt_prefix_out'
+
+--Run form program
+-----------------------------------------------------------  
+
+	startForm::
+	-- term_char = -1
+	term_mask = ky_enter+kc_func_key --Function Key = 2 Enter Key = 13
+	--Check if new list number is selected
+	--Set form values to newly request list number
+	IF (list_num <> list_num_curr) THEN
+			CNV_INT_STR(list_num, 3, 0, list_num_str)
+				--Input comments
+				value_array [6] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].identifier'
+				value_array [7] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].point_start_in'	
+				value_array [8] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].point_end_in'
+				value_array [9] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].point_start_out'
+				value_array [10] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].point_end_out'
+				value_array [11] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[1]'
+				value_array [12] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[2]'
+				value_array [13] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[3]'
+				value_array [14] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[4]'
+				value_array [15] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[5]'
+				value_array [16] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[6]'
+				value_array [17] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[7]'
+				value_array [18] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[8]'
+				value_array [19] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[9]'
+				value_array [20] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[10]'
+				value_array [21] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[11]'
+				value_array [22] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[12]'
+				value_array [23] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[13]'
+				value_array [24] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[14]'
+				value_array [25] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[15]'
+				value_array [26] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[16]'
+				value_array [27] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[17]'
+				value_array [28] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[18]'
+				value_array [29] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[19]'
+				value_array [30] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_in[20]'
+				--Output comments
+				value_array [31] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[1]'
+				value_array [32] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[2]'
+				value_array [33] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[3]'
+				value_array [34] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[4]'
+				value_array [35] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[5]'
+				value_array [36] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[6]'
+				value_array [37] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[7]'
+				value_array [38] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[8]'
+				value_array [39] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[9]'
+				value_array [40] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[10]'
+				value_array [41] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[11]'
+				value_array [42] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[12]'
+				value_array [43] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[13]'
+				value_array [44] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[14]'
+				value_array [45] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[15]'
+				value_array [46] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[16]'
+				value_array [47] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[17]'
+				value_array [48] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[18]'
+				value_array [49] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[19]'
+				value_array [50] = '[dynamic_io_cmnt]cmnt_lists[' + list_num_str + '].cmnt_out[20]'
+				
+
+			list_num_curr = list_num
+	ENDIF
+	
+	DISCTRL_FORM('DYN', form1, value_array, inact_array, change_array, ky_enter+kc_func_key, def_item, term_char, status);
+	--(DISCTRL_FORM-> karel program stays on line until "Form ends" is active.)
+	IF (STATUS <> 0) THEN
+		parameter = 'Form fault!'
+		WRITE(parameter, CR)
+		POST_ERR(status, parameter, 0, 1)
+		GOTO endProg
+	ENDIF
+	
+	IF ((term_char = KY_SELECT) OR (term_char = KY_NEW_MENU)) THEN
+		GOTO endProg
+	ENDIF
+	
+	IF term_char = ky_f1 THEN	--Go to end (Exit)
+        FORCE_SPMENU(tp_panel, SPI_TPHINTS, 1)
+		GOTO endProg
+	ENDIF
+	
+	IF term_char = ky_f2 THEN	--Refresh list data
+		GOTO startForm
+	ENDIF
+	
+	IF term_char = ky_enter THEN	--Refresh list data
+		GOTO startForm
+	ENDIF
+
+	IF (progStop = TRUE) THEN
+		GOTO endProg
+	ENDIF
+	
+	GOTO startForm	
+	
+	endProg::
+END dynioc_config

@@ -1,0 +1,125 @@
+* Form for dynamic io commenting
+* Dictionary Form File: dyn.ftx
+*
+* Generate form.kl which should be included in your KAREL program
+.kl dyn
+.form
+$-,form1
+&home &reverse "Dynamic IO Comment" &standard             &new_line
+" IO Comment Settings " 											&new_line
+" 1 List #                       " "-%2d(1,30)"                     &new_line
+" 2 IO List Register #:			 " "R[" "-%3d(1,200)""]" 			&new_line
+" 3 IO Port Type:				 " "-%8w(enum_sub)"				    &new_line
+" 4 Input Prefix:                " "-%-8k"                          &new_line
+" 5 Output Prefix:               " "-%-8k"                          &new_line
+" List Setup "                                                      &new_line
+" 1 List Identifier:             " "-%3d(1,512)"                    &new_line
+" IO Setup  "                                                       &new_line
+" 1 Input Start Position:        " "-%3d(1,512)"                    &new_line
+" 2 Input End Position:          " "-%3d(1,512)"                    &new_line
+" 3 Output Start Position:       " "-%3d(1,512)"                    &new_line
+" 4 Output End Position:         " "-%3d(1,512)"                    &new_line
+" IO Comments                    "                                  &new_line
+" Inputs "                                                          &new_line
+" IN[1]      " "-%-24k"                                              &new_line
+" IN[2]      " "-%-24k"                                              &new_line
+" IN[3]      " "-%-24k"                                              &new_line
+" IN[4]      " "-%-24k"                                              &new_line
+" IN[5]      " "-%-24k"                                              &new_line
+" IN[6]      " "-%-24k"                                              &new_line
+" IN[7]      " "-%-24k"                                              &new_line
+" IN[8]      " "-%-24k"                                              &new_line
+" IN[9]      " "-%-24k"                                              &new_line
+" IN[10]     " "-%-24k"                                              &new_line
+" IN[11]     " "-%-24k"                                              &new_line
+" IN[12]     " "-%-24k"                                              &new_line
+" IN[13]     " "-%-24k"                                              &new_line
+" IN[14]     " "-%-24k"                                              &new_line
+" IN[15]     " "-%-24k"                                              &new_line
+" IN[16]     " "-%-24k"                                              &new_line
+" IN[17]     " "-%-24k"                                              &new_line
+" IN[18]     " "-%-24k"                                              &new_line
+" IN[19]     " "-%-24k"                                              &new_line
+" IN[20]     " "-%-24k"                                              &new_line
+" Outputs "                                                         &new_line
+" OUT[1]     " "-%-24k"                                              &new_line
+" OUT[2]     " "-%-24k"                                              &new_line
+" OUT[3]     " "-%-24k"                                              &new_line
+" OUT[4]     " "-%-24k"                                              &new_line
+" OUT[5]     " "-%-24k"                                              &new_line
+" OUT[6]     " "-%-24k"                                              &new_line
+" OUT[7]     " "-%-24k"                                              &new_line
+" OUT[8]     " "-%-24k"                                              &new_line
+" OUT[9]     " "-%-24k"                                              &new_line
+" OUT[10]    " "-%-24k"                                              &new_line
+" OUT[11]    " "-%-24k"                                              &new_line
+" OUT[12]    " "-%-24k"                                              &new_line
+" OUT[13]    " "-%-24k"                                              &new_line
+" OUT[14]    " "-%-24k"                                              &new_line
+" OUT[15]    " "-%-24k"                                              &new_line
+" OUT[16]    " "-%-24k"                                              &new_line
+" OUT[17]    " "-%-24k"                                              &new_line
+" OUT[18]    " "-%-24k"                                              &new_line
+" OUT[19]    " "-%-24k"                                              &new_line
+" OUT[20]    " "-%-24k"                                              &new_line
+^form1_fkey
+?form1_help
+.endform
+$2,enum_sub "DI/DO"
+$3 "RDI/RDO"
+$4 "\a"
+$-,form1_fkey
+"EXIT" &new_line
+"Update" &new_line
+"" &new_line
+"" &new_line
+"HELP" &new_line
+"" &new_line
+"HELP" &new_line
+*Allows you to specify the labels for F4 and F5 function keys
+$-,bool_fkey
+"FALSE" &new_line * F5 key label, value will be set FALSE
+"TRUE" &new_line * F4 key label, value will be set TRUE
+$-,form1_help * help text
+"1: List # - Specifies the list to" &new_line
+"modify. Note: After changing this value" &new_line
+"press F2 to update fields with desired" &new_line
+"list index values. A Total of 10 Lists" &new_line
+"available." &new_line
+"2:IO List Register # - The register that" &new_line
+"contains the list Identifier" &new_line
+"3:IO Port Type - Use F3[Choice] to" &new_line
+"select DI/DO or RDI/RDO" &new_line
+"4:Input Prefix - The desired prefix to" &new_line
+"use for inputs. This string will be" &new_line
+"concatenated with every input comment" &new_line
+"to form one complete string." &new_line
+"5:Output Prefix - The desired prefix to" &new_line
+"use for outputs. This string will be" &new_line
+"concatenated with every output comment" &new_line
+"to from one complete string." &new_line
+"6:List Identifier - This is the ID" &new_line
+"number that will select this list."&new_line
+"If the register specified in IO List" &new_line
+"Register # equals this value, the IO" &new_line
+"comments will be populated" &new_line
+"from this list." &new_line
+"7:Input Start Position - The desired" &new_line
+"starting point within the DI or RDI" &new_line
+"Note: if start or end point" &new_line
+"exceeds IO mapping" &new_line
+"comments will not be writen." &new_line
+"8:Input End Position - The desired" &new_line
+"ending point wihtin the DI or RDI map" &new_line
+"9:IO Comment Inputs - Enter desired" &new_line
+"string for each point." &new_line
+"IN[1] corresponds to input number" &new_line
+"specified in the Input Start Position" &new_line
+"field." &new_line
+"10:IO Comment Outputs - Enter the desired" &new_line
+"string for each output point. OUT[1]" &new_line
+"corresponds to the ouput number" &new_line
+"specified in the Output Start Position" &new_line
+"field." &new_line
+"" &new_line
+* You can have a maximum of 48 help lines
