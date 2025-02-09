@@ -153,7 +153,7 @@ point_i = cmnt_lists[cmnt_list_idx].point_start_in
 next_in::
 IF (point_i <= cmnt_lists[cmnt_list_idx].point_end_in) THEN
 	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_in[idx])) THEN--Check for uninitialized STRING. Skip string if no data is present.
-		SET_PORT_CMT(port_type_in, point_i, cmnt_prefix_in + cmnt_lists[cmnt_list_idx].cmnt_in[idx], STATUS) 	--Write string to port comment
+		SET_PORT_CMT(port_type_in, point_i, cmnt_prefix_in + cmnt_lists[cmnt_list_idx].cmnt_in[idx], STATUS)--Write string to port comment
 	ELSE
 		SET_PORT_CMT(port_type_in, point_i, cmnt_prefix_in + 'spare', STATUS)
 		WRITE TPERROR('Uninitialized Input comment', cmnt_list_id_int,  idx, CR)
@@ -172,7 +172,7 @@ point_i = cmnt_lists[cmnt_list_idx].point_start_out
 next_out::
 IF (point_i <= cmnt_lists[cmnt_list_idx].point_end_out) THEN
 	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_out[idx])) THEN--Check for uninitialized string. Write prefix string to comment.
-		SET_PORT_CMT(port_type_out, point_i, cmnt_prefix_out + cmnt_lists[cmnt_list_idx].cmnt_out[idx], STATUS)	--Write string to port comment
+		SET_PORT_CMT(port_type_out, point_i, cmnt_prefix_out + cmnt_lists[cmnt_list_idx].cmnt_out[idx], STATUS)--Write string to port comment
 	ELSE
 		SET_PORT_CMT(port_type_out, point_i, cmnt_prefix_out + 'spare', STATUS)
 		WRITE TPERROR('Uninitialized Input comment', cmnt_list_id_int,  idx, CR)
