@@ -5,9 +5,7 @@
 --** Date:  07/19/2023.
 --** Function: Dynamic IO commenting to change DI/DO or RI/RO comments based on a register value
 --** Intended Use: Tool changer applications where IO points are diffrent from one tool to the next
---** Revision 1.0 - Initial Release
---** Revision 1.1 - Reduced form columns. Form would fault controller when switching to split screen.
---** Revision 1.2 - Added variable index to reduce the value array update logic and improve expandability
+--** Revisoin History 1.0 - Initial Release
 --*************************************************************************************************
 
 PROGRAM DYNAMIC_IO_CMNT
@@ -126,14 +124,19 @@ ENDIF
 --RDI/RDO maximum range contstant 8 in/out
 --Abort execution if range exceeds range
 -----------------------------------------------------------
-IF (NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_start_in)) AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_end_in)) AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_start_out)) AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_end_out))) THEN
+IF (NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_start_in))
+    AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_end_in)) 
+    AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_start_out)) 
+    AND NOT(UNINIT(cmnt_lists[cmnt_list_idx].point_end_out))) THEN
     SELECT port_type OF
         CASE(1): --DI/DO
-            IF (cmnt_lists[cmnt_list_idx].point_start_in > dig_port_max) OR (cmnt_lists[cmnt_list_idx].point_start_out > dig_port_max ) THEN
+            IF (cmnt_lists[cmnt_list_idx].point_start_in > dig_port_max)
+            OR (cmnt_lists[cmnt_list_idx].point_start_out > dig_port_max ) THEN
                 GOTO endprog
             ENDIF
         CASE(2): --RDI/RDO  
-            IF (cmnt_lists[cmnt_list_idx].point_start_in > rdig_port_max) OR (cmnt_lists[cmnt_list_idx].point_start_out > rdig_port_max ) THEN
+            IF (cmnt_lists[cmnt_list_idx].point_start_in > rdig_port_max)
+            OR (cmnt_lists[cmnt_list_idx].point_start_out > rdig_port_max) THEN
                 GOTO endprog 
             ENDIF 
     ENDSELECT
@@ -149,7 +152,7 @@ idx = 1
 point_i = cmnt_lists[cmnt_list_idx].point_start_in
 next_in::
 IF (point_i <= cmnt_lists[cmnt_list_idx].point_end_in) THEN
-	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_in[idx])) THEN		--Check for uninitialized STRING. Skip string if no data is present.
+	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_in[idx])) THEN--Check for uninitialized STRING. Skip string if no data is present.
 		SET_PORT_CMT(port_type_in, point_i, cmnt_prefix_in + cmnt_lists[cmnt_list_idx].cmnt_in[idx], STATUS) 	--Write string to port comment
 	ELSE
 		SET_PORT_CMT(port_type_in, point_i, cmnt_prefix_in + 'spare', STATUS)
@@ -168,7 +171,7 @@ idx = 1
 point_i = cmnt_lists[cmnt_list_idx].point_start_out
 next_out::
 IF (point_i <= cmnt_lists[cmnt_list_idx].point_end_out) THEN
-	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_out[idx])) THEN	--Check for uninitialized string. Write prefix string to comment.
+	IF NOT(UNINIT(cmnt_lists[cmnt_list_idx].cmnt_out[idx])) THEN--Check for uninitialized string. Write prefix string to comment.
 		SET_PORT_CMT(port_type_out, point_i, cmnt_prefix_out + cmnt_lists[cmnt_list_idx].cmnt_out[idx], STATUS)	--Write string to port comment
 	ELSE
 		SET_PORT_CMT(port_type_out, point_i, cmnt_prefix_out + 'spare', STATUS)
